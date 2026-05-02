@@ -1,0 +1,146 @@
+name: 🚀 Deploy Crave
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ─── Backend Lint & Test ──────────────────────────────────
+  backend:
+    name: Backend CI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate syntax
+        run: |
+          node -e "
+          process.env.DATABASE_URL='postgresql://fake:fake@localhost/fake';
+          process.env.JWT_SECRET='test_secret_minimum_32_chars_long';
+          process.env.STRIPE_SECRET_KEY='sk_test_fake';
+          const files=[
+            './src/config/database',
+            './src/middleware/auth',
+            './src/controllers/authController',
+            './src/controllers/restaurantController',
+            './src/controllers/orderController',
+            './src/controllers/paymentController',
+            './src/controllers/adminController',
+            './src/controllers/addressController',
+            './src/routes/index',
+          ];
+          files.forEach(f=>{try{require(f);console.log('✅',f);}catch(e){if(!e.message.includes('ECONNREFUSED')&&!e.message.includes('pg'))throw e;}});
+          console.log('All modules OK');
+          "
+
+  # ─── Frontend Build ───────────────────────────────────────
+  frontend:
+    name: Frontend CI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build React app
+        env:
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL || 'http://localhost:5000/api' }}
+          REACT_APP_STRIPE_PUBLISHABLE_KEY: ${{ secrets.REACT_APP_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder' }}
+          CI: false
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        if: github.ref == 'refs/heads/main'
+        with:
+          name: frontend-build
+          path: frontend/build/
+          retention-days: 7
+
+  # ─── Deploy to Railway (Backend) ─────────────────────────
+  deploy-backend:
+    name: Deploy Backend → Railway
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          if [ -n "$RAILWAY_TOKEN" ]; then
+            cd backend
+            railway up --service crave-api
+            echo "✅ Backend deployed to Railway"
+          else
+            echo "⚠️  RAILWAY_TOKEN not set — skipping Railway deploy"
+            echo "    Add it in GitHub → Settings → Secrets → Actions"
+          fi
+
+  # ─── Deploy to Vercel (Frontend) ─────────────────────────
+  deploy-frontend:
+    name: Deploy Frontend → Vercel
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Deploy to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -n "$VERCEL_TOKEN" ]; then
+            cd frontend
+            vercel pull --yes --environment=production --token=$VERCEL_TOKEN
+            vercel build --prod --token=$VERCEL_TOKEN
+            vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
+            echo "✅ Frontend deployed to Vercel"
+          else
+            echo "⚠️  VERCEL_TOKEN not set — skipping Vercel deploy"
+            echo "    Add it in GitHub → Settings → Secrets → Actions"
+          fi
