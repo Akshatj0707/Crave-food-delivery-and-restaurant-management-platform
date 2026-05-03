@@ -2,17 +2,25 @@ services:
   - type: web
     name: crave-api
     env: node
+    region: oregon
+    plan: free
+    rootDir: backend
     buildCommand: npm install
-    startCommand: npm start
+    startCommand: node src/server.js
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: 5000
       - key: DATABASE_URL
         fromDatabase:
           name: crave-db
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_PUBLISHABLE_KEY
@@ -26,4 +34,5 @@ databases:
   - name: crave-db
     databaseName: crave_db
     user: crave_user
+    region: oregon
     plan: free

@@ -1,14 +1,8 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "build"
-      }
-    }
-  ],
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
+  "framework": "create-react-app",
   "routes": [
     {
       "src": "/static/(.*)",
@@ -18,9 +12,5 @@
       "src": "/(.*)",
       "dest": "/index.html"
     }
-  ],
-  "env": {
-    "REACT_APP_API_URL": "@crave_api_url",
-    "REACT_APP_STRIPE_PUBLISHABLE_KEY": "@stripe_publishable_key"
-  }
+  ]
 }
