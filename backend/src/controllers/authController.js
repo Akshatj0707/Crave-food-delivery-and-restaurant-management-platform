@@ -1,6 +1,5 @@
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const pool = require('../config/database');
+const User = require('../models/User');
 
 const generateToken = (userId) =>
   jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
@@ -10,31 +9,20 @@ const signup = async (req, res) => {
   try {
     const { email, password, firstName, lastName, phone, role = 'customer' } = req.body;
 
-    const allowedRoles = ['customer', 'partner'];
-    if (!allowedRoles.includes(role)) {
+    if (!['customer', 'partner'].includes(role))
       return res.status(400).json({ success: false, message: 'Invalid role' });
-    }
 
-    const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
-    if (existing.rows.length) {
+    const existing = await User.findOne({ email: email.toLowerCase() });
+    if (existing)
       return res.status(409).json({ success: false, message: 'Email already in use' });
-    }
 
-    const passwordHash = await bcrypt.hash(password, 12);
-    const result = await pool.query(`
-      INSERT INTO users (email, password_hash, role, first_name, last_name, phone, is_verified)
-      VALUES ($1, $2, $3, $4, $5, $6, true)
-      RETURNING id, email, role, first_name, last_name, phone, avatar_url, created_at
-    `, [email, passwordHash, role, firstName, lastName, phone || null]);
-
-    const user = result.rows[0];
-    const token = generateToken(user.id);
-
-    res.status(201).json({
-      success: true,
-      message: 'Account created successfully',
-      data: { token, user }
+    const user = await User.create({
+      email, passwordHash: password,
+      role, firstName, lastName, phone, isVerified: true,
     });
+
+    const token = generateToken(user._id);
+    res.status(201).json({ success: true, message: 'Account created successfully', data: { token, user } });
   } catch (err) {
     console.error('Signup error:', err);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -45,30 +33,16 @@ const signup = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    const result = await pool.query(
-      'SELECT * FROM users WHERE email = $1 AND is_active = true',
-      [email]
-    );
-    
-    if (!result.rows.length) {
+    const user = await User.findOne({ email: email.toLowerCase(), isActive: true }).select('+passwordHash');
+    if (!user)
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
-    }
 
-    const user = result.rows[0];
-    const validPassword = await bcrypt.compare(password, user.password_hash);
-    if (!validPassword) {
+    const valid = await user.comparePassword(password);
+    if (!valid)
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
-    }
 
-    const token = generateToken(user.id);
-    const { password_hash, ...userWithoutPassword } = user;
-
-    res.json({
-      success: true,
-      message: 'Login successful',
-      data: { token, user: userWithoutPassword }
-    });
+    const token = generateToken(user._id);
+    res.json({ success: true, message: 'Login successful', data: { token, user } });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -78,11 +52,8 @@ const login = async (req, res) => {
 // GET /api/auth/me
 const getMe = async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT id, email, role, first_name, last_name, phone, avatar_url, is_verified, created_at FROM users WHERE id = $1',
-      [req.user.id]
-    );
-    res.json({ success: true, data: result.rows[0] });
+    const user = await User.findById(req.user._id);
+    res.json({ success: true, data: user });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
@@ -92,13 +63,12 @@ const getMe = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const { firstName, lastName, phone } = req.body;
-    const result = await pool.query(`
-      UPDATE users 
-      SET first_name = $1, last_name = $2, phone = $3, updated_at = NOW()
-      WHERE id = $4
-      RETURNING id, email, role, first_name, last_name, phone, avatar_url
-    `, [firstName, lastName, phone, req.user.id]);
-    res.json({ success: true, data: result.rows[0] });
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { firstName, lastName, phone },
+      { new: true }
+    );
+    res.json({ success: true, data: user });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
@@ -108,17 +78,14 @@ const updateProfile = async (req, res) => {
 const changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    const result = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
-    const user = result.rows[0];
+    const user = await User.findById(req.user._id).select('+passwordHash');
 
-    const valid = await bcrypt.compare(currentPassword, user.password_hash);
-    if (!valid) {
+    const valid = await user.comparePassword(currentPassword);
+    if (!valid)
       return res.status(400).json({ success: false, message: 'Current password is incorrect' });
-    }
 
-    const newHash = await bcrypt.hash(newPassword, 12);
-    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [newHash, req.user.id]);
-
+    user.passwordHash = newPassword;
+    await user.save();
     res.json({ success: true, message: 'Password updated successfully' });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });

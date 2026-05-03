@@ -1,38 +1,62 @@
-const pool = require('../config/database');
+const User = require('../models/User');
+const Restaurant = require('../models/Restaurant');
+const Order = require('../models/Order');
 
-// GET /api/admin/stats
 const getDashboardStats = async (req, res) => {
   try {
-    const [users, restaurants, orders, revenue] = await Promise.all([
-      pool.query('SELECT COUNT(*) as total, role, COUNT(*) FILTER (WHERE DATE(created_at) = CURRENT_DATE) as today FROM users GROUP BY role'),
-      pool.query('SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE is_verified) as verified, COUNT(*) FILTER (WHERE is_open) as open FROM restaurants'),
-      pool.query(`
-        SELECT COUNT(*) as total,
-          COUNT(*) FILTER (WHERE status IN ('pending','confirmed','preparing','ready','out_for_delivery')) as active,
-          COUNT(*) FILTER (WHERE DATE(created_at) = CURRENT_DATE) as today,
-          COUNT(*) FILTER (WHERE status = 'delivered') as delivered,
-          COUNT(*) FILTER (WHERE status = 'cancelled') as cancelled
-        FROM orders
-      `),
-      pool.query(`
-        SELECT 
-          SUM(CASE WHEN payment_status = 'paid' THEN total_amount ELSE 0 END) as total_revenue,
-          SUM(CASE WHEN payment_status = 'paid' AND DATE(created_at) = CURRENT_DATE THEN total_amount ELSE 0 END) as today_revenue,
-          SUM(CASE WHEN payment_status = 'paid' AND DATE_TRUNC('month', created_at) = DATE_TRUNC('month', NOW()) THEN total_amount ELSE 0 END) as month_revenue
-        FROM orders
-      `)
+    const today = new Date(); today.setHours(0,0,0,0);
+
+    const [
+      totalCustomers, totalPartners, totalAdmins,
+      todayCustomers, restaurantStats, orderStats, revenueData,
+      todayRevenue, monthRevenue
+    ] = await Promise.all([
+      User.countDocuments({ role: 'customer' }),
+      User.countDocuments({ role: 'partner' }),
+      User.countDocuments({ role: { $in: ['admin','super_admin'] } }),
+      User.countDocuments({ role: 'customer', createdAt: { $gte: today } }),
+      Restaurant.aggregate([{ $group: { _id: null,
+        total: { $sum: 1 },
+        verified: { $sum: { $cond: ['$isVerified', 1, 0] } },
+        open: { $sum: { $cond: ['$isOpen', 1, 0] } },
+      }}]),
+      Order.aggregate([{ $group: { _id: null,
+        total: { $sum: 1 },
+        delivered: { $sum: { $cond: [{ $eq: ['$status','delivered'] }, 1, 0] } },
+        cancelled: { $sum: { $cond: [{ $eq: ['$status','cancelled'] }, 1, 0] } },
+        active: { $sum: { $cond: [{ $in: ['$status',['pending','confirmed','preparing','ready','out_for_delivery']] }, 1, 0] } },
+      }}]),
+      Order.aggregate([
+        { $match: { paymentStatus: 'paid' } },
+        { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+      ]),
+      Order.aggregate([
+        { $match: { paymentStatus: 'paid', createdAt: { $gte: today } } },
+        { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+      ]),
+      Order.aggregate([
+        { $match: { paymentStatus: 'paid', createdAt: { $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) } } },
+        { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+      ]),
     ]);
 
-    const usersByRole = {};
-    users.rows.forEach(r => { usersByRole[r.role] = { total: parseInt(r.total), today: parseInt(r.today) }; });
+    const todayOrders = await Order.countDocuments({ createdAt: { $gte: today } });
 
     res.json({
       success: true,
       data: {
-        users: usersByRole,
-        restaurants: restaurants.rows[0],
-        orders: orders.rows[0],
-        revenue: revenue.rows[0]
+        users: {
+          customer: { total: totalCustomers, today: todayCustomers },
+          partner: { total: totalPartners, today: 0 },
+          admin: { total: totalAdmins, today: 0 },
+        },
+        restaurants: restaurantStats[0] || { total: 0, verified: 0, open: 0 },
+        orders: { ...( orderStats[0] || { total: 0, delivered: 0, cancelled: 0, active: 0 }), today: todayOrders },
+        revenue: {
+          total_revenue: revenueData[0]?.total || 0,
+          today_revenue: todayRevenue[0]?.total || 0,
+          month_revenue: monthRevenue[0]?.total || 0,
+        }
       }
     });
   } catch (err) {
@@ -41,190 +65,117 @@ const getDashboardStats = async (req, res) => {
   }
 };
 
-// GET /api/admin/users
 const getUsers = async (req, res) => {
   try {
     const { role, search, page = 1, limit = 20 } = req.query;
-    const offset = (page - 1) * limit;
-
-    let where = [];
-    const params = [];
-    if (role) { where.push(`role = $${params.length + 1}`); params.push(role); }
-    if (search) {
-      where.push(`(first_name ILIKE $${params.length + 1} OR last_name ILIKE $${params.length + 1} OR email ILIKE $${params.length + 1})`);
-      params.push(`%${search}%`);
-    }
-    const whereStr = where.length ? 'WHERE ' + where.join(' AND ') : '';
-
-    const countResult = await pool.query(`SELECT COUNT(*) FROM users ${whereStr}`, params);
-    params.push(parseInt(limit), offset);
-
-    const result = await pool.query(`
-      SELECT id, email, role, first_name, last_name, phone, is_verified, is_active, created_at
-      FROM users ${whereStr}
-      ORDER BY created_at DESC
-      LIMIT $${params.length - 1} OFFSET $${params.length}
-    `, params);
-
-    res.json({
-      success: true,
-      data: result.rows,
-      pagination: {
-        page: parseInt(page), limit: parseInt(limit),
-        total: parseInt(countResult.rows[0].count),
-        totalPages: Math.ceil(parseInt(countResult.rows[0].count) / limit)
-      }
+    const query = {};
+    if (role) query.role = role;
+    if (search) query.$or = [
+      { firstName: new RegExp(search, 'i') },
+      { lastName: new RegExp(search, 'i') },
+      { email: new RegExp(search, 'i') },
+    ];
+    const total = await User.countDocuments(query);
+    const users = await User.find(query)
+      .sort({ createdAt: -1 })
+      .skip((parseInt(page)-1)*parseInt(limit))
+      .limit(parseInt(limit));
+    res.json({ success: true, data: users,
+      pagination: { page: parseInt(page), limit: parseInt(limit), total, totalPages: Math.ceil(total/limit) }
     });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
-// PATCH /api/admin/users/:id
 const updateUser = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { role, isActive, isVerified } = req.body;
-
-    // Prevent modifying super admins unless you are super admin
-    const targetUser = await pool.query('SELECT role FROM users WHERE id = $1', [id]);
-    if (targetUser.rows[0]?.role === 'super_admin' && req.user.role !== 'super_admin') {
+    const target = await User.findById(req.params.id);
+    if (!target) return res.status(404).json({ success: false, message: 'User not found' });
+    if (target.role === 'super_admin' && req.user.role !== 'super_admin')
       return res.status(403).json({ success: false, message: 'Cannot modify super admin' });
-    }
-
-    const result = await pool.query(`
-      UPDATE users SET
-        role = COALESCE($1, role),
-        is_active = COALESCE($2, is_active),
-        is_verified = COALESCE($3, is_verified),
-        updated_at = NOW()
-      WHERE id = $4
-      RETURNING id, email, role, first_name, last_name, is_active, is_verified
-    `, [role, isActive, isVerified, id]);
-
-    res.json({ success: true, data: result.rows[0] });
+    const { role, isActive, isVerified } = req.body;
+    if (role !== undefined) target.role = role;
+    if (isActive !== undefined) target.isActive = isActive;
+    if (isVerified !== undefined) target.isVerified = isVerified;
+    await target.save();
+    res.json({ success: true, data: target });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
-// GET /api/admin/restaurants
 const getRestaurants = async (req, res) => {
   try {
     const { isVerified, search, page = 1, limit = 20 } = req.query;
-    const offset = (page - 1) * limit;
-
-    let where = [];
-    const params = [];
-    if (isVerified !== undefined) { where.push(`is_verified = $${params.length + 1}`); params.push(isVerified === 'true'); }
-    if (search) { where.push(`name ILIKE $${params.length + 1}`); params.push(`%${search}%`); }
-    const whereStr = where.length ? 'WHERE ' + where.join(' AND ') : '';
-
-    const countResult = await pool.query(`SELECT COUNT(*) FROM restaurants ${whereStr}`, params);
-    params.push(parseInt(limit), offset);
-
-    const result = await pool.query(`
-      SELECT r.*, u.first_name as owner_first_name, u.last_name as owner_last_name, u.email as owner_email
-      FROM restaurants r
-      LEFT JOIN users u ON u.id = r.owner_id
-      ${whereStr}
-      ORDER BY r.created_at DESC
-      LIMIT $${params.length - 1} OFFSET $${params.length}
-    `, params);
-
-    res.json({
-      success: true,
-      data: result.rows,
-      pagination: {
-        page: parseInt(page), limit: parseInt(limit),
-        total: parseInt(countResult.rows[0].count),
-        totalPages: Math.ceil(parseInt(countResult.rows[0].count) / limit)
-      }
+    const query = {};
+    if (isVerified !== undefined) query.isVerified = isVerified === 'true';
+    if (search) query.name = new RegExp(search, 'i');
+    const total = await Restaurant.countDocuments(query);
+    const restaurants = await Restaurant.find(query, { menu: 0 })
+      .sort({ createdAt: -1 })
+      .skip((parseInt(page)-1)*parseInt(limit))
+      .limit(parseInt(limit))
+      .populate('ownerId', 'firstName lastName email');
+    res.json({ success: true, data: restaurants,
+      pagination: { page: parseInt(page), limit: parseInt(limit), total, totalPages: Math.ceil(total/limit) }
     });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
-// PATCH /api/admin/restaurants/:id
 const updateRestaurant = async (req, res) => {
   try {
-    const { id } = req.params;
     const { isVerified, isFeatured, isOpen } = req.body;
-
-    const result = await pool.query(`
-      UPDATE restaurants SET
-        is_verified = COALESCE($1, is_verified),
-        is_featured = COALESCE($2, is_featured),
-        is_open = COALESCE($3, is_open),
-        updated_at = NOW()
-      WHERE id = $4
-      RETURNING *
-    `, [isVerified, isFeatured, isOpen, id]);
-
-    res.json({ success: true, data: result.rows[0] });
+    const update = {};
+    if (isVerified !== undefined) update.isVerified = isVerified;
+    if (isFeatured !== undefined) update.isFeatured = isFeatured;
+    if (isOpen !== undefined) update.isOpen = isOpen;
+    const restaurant = await Restaurant.findByIdAndUpdate(req.params.id, update, { new: true });
+    res.json({ success: true, data: restaurant });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
-// GET /api/admin/orders
 const getOrders = async (req, res) => {
   try {
     const { status, page = 1, limit = 20 } = req.query;
-    const offset = (page - 1) * limit;
-    const params = [];
-    let where = '';
-    if (status) { where = 'WHERE o.status = $1'; params.push(status); }
-
-    const countResult = await pool.query(`SELECT COUNT(*) FROM orders o ${where}`, params);
-    params.push(parseInt(limit), offset);
-
-    const result = await pool.query(`
-      SELECT o.*, r.name as restaurant_name,
-        u.first_name as customer_first_name, u.last_name as customer_last_name
-      FROM orders o
-      JOIN restaurants r ON r.id = o.restaurant_id
-      JOIN users u ON u.id = o.customer_id
-      ${where}
-      ORDER BY o.created_at DESC
-      LIMIT $${params.length - 1} OFFSET $${params.length}
-    `, params);
-
-    res.json({
-      success: true,
-      data: result.rows,
-      pagination: {
-        page: parseInt(page), limit: parseInt(limit),
-        total: parseInt(countResult.rows[0].count),
-        totalPages: Math.ceil(parseInt(countResult.rows[0].count) / limit)
-      }
+    const query = {};
+    if (status) query.status = status;
+    const total = await Order.countDocuments(query);
+    const orders = await Order.find(query)
+      .sort({ createdAt: -1 })
+      .skip((parseInt(page)-1)*parseInt(limit))
+      .limit(parseInt(limit))
+      .populate('restaurantId', 'name')
+      .populate('customerId', 'firstName lastName');
+    res.json({ success: true, data: orders,
+      pagination: { page: parseInt(page), limit: parseInt(limit), total, totalPages: Math.ceil(total/limit) }
     });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
-// GET /api/admin/revenue-chart
 const getRevenueChart = async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT 
-        DATE(created_at) as date,
-        SUM(CASE WHEN payment_status = 'paid' THEN total_amount ELSE 0 END) as revenue,
-        COUNT(*) as orders
-      FROM orders
-      WHERE created_at >= NOW() - INTERVAL '30 days'
-      GROUP BY DATE(created_at)
-      ORDER BY date
-    `);
-    res.json({ success: true, data: result.rows });
+    const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const data = await Order.aggregate([
+      { $match: { createdAt: { $gte: thirtyDaysAgo } } },
+      { $group: {
+        _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+        revenue: { $sum: { $cond: [{ $eq: ['$paymentStatus','paid'] }, '$totalAmount', 0] } },
+        orders: { $sum: 1 },
+      }},
+      { $sort: { _id: 1 } },
+      { $project: { _id: 0, date: '$_id', revenue: 1, orders: 1 } }
+    ]);
+    res.json({ success: true, data });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
-module.exports = {
-  getDashboardStats, getUsers, updateUser, getRestaurants,
-  updateRestaurant, getOrders, getRevenueChart
-};
+module.exports = { getDashboardStats, getUsers, updateUser, getRestaurants, updateRestaurant, getOrders, getRevenueChart };
