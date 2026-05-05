@@ -10,10 +10,13 @@ const paymentController = require('./controllers/paymentController');
 
 const app = express();
 
-// ─── Connect MongoDB on every cold start ──────────────────
-connectDB().catch(err => console.error('DB connect error:', err.message));
+// ─── Connect MongoDB ───────────────────────────────────────
+connectDB().catch(err => {
+  console.error('❌ Failed to connect to MongoDB:', err.message);
+  process.exit(1);
+});
 
-// ─── Stripe Webhook (raw body) ────────────────────────────
+// ─── Stripe Webhook (raw body before json parser) ─────────
 app.post('/api/payments/webhook',
   express.raw({ type: 'application/json' }),
   paymentController.handleWebhook
@@ -29,7 +32,6 @@ app.use(express.urlencoded({ extended: true }));
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   'http://localhost:3000',
-  'http://localhost:8888',
 ].filter(Boolean);
 
 app.use(cors({
@@ -37,9 +39,9 @@ app.use(cors({
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
     if (
+      origin.endsWith('.railway.app') ||
       origin.endsWith('.netlify.app') ||
-      origin.endsWith('.vercel.app') ||
-      origin.endsWith('.onrender.com')
+      origin.endsWith('.vercel.app')
     ) return callback(null, true);
     callback(new Error(`CORS blocked: ${origin}`));
   },
@@ -75,9 +77,10 @@ app.get('/health', async (req, res) => {
 
 app.get('/', (req, res) => {
   res.json({
-    message: '🍽️ Crave API is running',
+    message: '🍽️ Crave API is running on Railway!',
     version: '1.0.0',
-    endpoints: { health: '/health', api: '/api' },
+    health: '/health',
+    api: '/api',
   });
 });
 
@@ -92,13 +95,12 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, message: 'Internal server error' });
 });
 
-// ─── Start local server (not on Netlify) ─────────────────
-if (!process.env.NETLIFY) {
-  const PORT = process.env.PORT || 5000;
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Crave API running on http://localhost:${PORT}`);
-    console.log(`   Env: ${process.env.NODE_ENV || 'development'}`);
-  });
-}
+// ─── Start Server ─────────────────────────────────────────
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Crave API running on port ${PORT}`);
+  console.log(`   Env: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`   Health: http://localhost:${PORT}/health`);
+});
 
 module.exports = app;
