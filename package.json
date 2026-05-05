@@ -1,17 +1,17 @@
 {
-  "name": "crave-backend",
+  "name": "crave-fullstack",
   "version": "1.0.0",
-  "description": "Crave Food Delivery - Full Stack (Cyclic)",
-  "main": "src/server.js",
+  "description": "Crave Food Delivery & Restaurant Management Platform",
+  "main": "backend/src/server.js",
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
   },
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "seed": "node src/config/seed.js",
-    "build": "cd ../frontend && npm install && npm run build && cp -r build ../backend/public/app"
+    "start": "node backend/src/server.js",
+    "build": "npm install --prefix frontend && npm run build --prefix frontend",
+    "postinstall": "npm install --prefix backend",
+    "seed": "node backend/src/config/seed.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -26,8 +26,5 @@
     "morgan": "^1.10.0",
     "serverless-http": "^3.2.0",
     "stripe": "^14.10.0"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.2"
   }
 }

@@ -1,0 +1,10 @@
+{
+  "name": "crave-food-delivery",
+  "build": {
+    "command": "npm run build",
+    "output": "frontend/build"
+  },
+  "start": {
+    "command": "node backend/src/server.js"
+  }
+}

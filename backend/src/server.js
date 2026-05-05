@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const path = require('path');
 const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/database');
 const routes = require('./routes');
@@ -29,20 +30,17 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // ─── CORS ─────────────────────────────────────────────────
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  'http://localhost:3000',
-].filter(Boolean);
-
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
     if (
-      origin.endsWith('.koyeb.app') ||
+      origin.endsWith('.cyclic.app') ||
+      origin.endsWith('.cyclic.cloud') ||
       origin.endsWith('.railway.app') ||
       origin.endsWith('.netlify.app') ||
-      origin.endsWith('.vercel.app')
+      origin.endsWith('.vercel.app') ||
+      origin === process.env.FRONTEND_URL ||
+      origin === 'http://localhost:3000'
     ) return callback(null, true);
     callback(new Error(`CORS blocked: ${origin}`));
   },
@@ -59,7 +57,7 @@ app.use('/api', rateLimit({
   legacyHeaders: false,
 }));
 
-// ─── Routes ───────────────────────────────────────────────
+// ─── API Routes ───────────────────────────────────────────
 app.use('/api', routes);
 
 // ─── Health Check ─────────────────────────────────────────
@@ -76,14 +74,43 @@ app.get('/health', async (req, res) => {
   });
 });
 
-app.get('/', (req, res) => {
-  res.json({
-    message: '🍽️ Crave API is running on Koyeb!',
-    version: '1.0.0',
-    health: '/health',
-    api: '/api',
+// ─── Serve React Frontend (Production) ────────────────────
+// Check multiple possible build locations
+const frontendBuildPaths = [
+  path.join(__dirname, '../../frontend/build'),
+  path.join(__dirname, '../public/app'),
+  path.join(__dirname, '../../build'),
+];
+
+let frontendPath = null;
+const fs = require('fs');
+for (const p of frontendBuildPaths) {
+  if (fs.existsSync(path.join(p, 'index.html'))) {
+    frontendPath = p;
+    console.log(`✅ Serving frontend from: ${p}`);
+    break;
+  }
+}
+
+if (frontendPath) {
+  // Serve static files
+  app.use(express.static(frontendPath));
+  // All non-API routes → React app
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api') && !req.path.startsWith('/health')) {
+      res.sendFile(path.join(frontendPath, 'index.html'));
+    }
   });
-});
+} else {
+  console.log('⚠️  Frontend build not found — API only mode');
+  app.get('/', (req, res) => {
+    res.json({
+      message: '🍽️ Crave API is running!',
+      health: '/health',
+      api: '/api',
+    });
+  });
+}
 
 // ─── 404 ─────────────────────────────────────────────────
 app.use((req, res) => {
@@ -97,10 +124,9 @@ app.use((err, req, res, next) => {
 });
 
 // ─── Start Server ─────────────────────────────────────────
-// Koyeb uses port 8000 by default
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Crave API running on port ${PORT}`);
+  console.log(`🚀 Crave running on port ${PORT}`);
   console.log(`   Env: ${process.env.NODE_ENV || 'development'}`);
   console.log(`   Health: http://localhost:${PORT}/health`);
 });

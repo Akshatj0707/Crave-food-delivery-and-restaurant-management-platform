@@ -1,6 +1,11 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// When frontend and backend are on same domain (Cyclic),
+// use relative URL. Otherwise use env variable.
+const API_URL = process.env.REACT_APP_API_URL ||
+  (window.location.hostname === 'localhost'
+    ? 'http://localhost:5000/api'
+    : '/api');
 
 const api = axios.create({
   baseURL: API_URL,
@@ -27,7 +32,7 @@ api.interceptors.response.use(
   }
 );
 
-// ─── Auth ───────────────────────────────────────────────────
+// ─── Auth ──────────────────────────────────────────────────
 export const authAPI = {
   signup: (data) => api.post('/auth/signup', data),
   login: (data) => api.post('/auth/login', data),
@@ -36,7 +41,7 @@ export const authAPI = {
   changePassword: (data) => api.put('/auth/change-password', data),
 };
 
-// ─── Restaurants ────────────────────────────────────────────
+// ─── Restaurants ───────────────────────────────────────────
 export const restaurantAPI = {
   getAll: (params) => api.get('/restaurants', { params }),
   getById: (id) => api.get(`/restaurants/${id}`),
@@ -44,12 +49,13 @@ export const restaurantAPI = {
   create: (data) => api.post('/restaurants', data),
   update: (id, data) => api.put(`/restaurants/${id}`, data),
   getMenu: (id) => api.get(`/restaurants/${id}/menu`),
+  addMenuCategory: (id, data) => api.post(`/restaurants/${id}/menu/categories`, data),
   addMenuItem: (id, data) => api.post(`/restaurants/${id}/menu/items`, data),
   updateMenuItem: (itemId, data) => api.put(`/restaurants/menu/items/${itemId}`, data),
   getTables: (id) => api.get(`/restaurants/${id}/tables`),
 };
 
-// ─── Orders ─────────────────────────────────────────────────
+// ─── Orders ───────────────────────────────────────────────
 export const orderAPI = {
   create: (data) => api.post('/orders', data),
   getMyOrders: (params) => api.get('/orders', { params }),
@@ -60,7 +66,7 @@ export const orderAPI = {
   addReview: (id, data) => api.post(`/orders/${id}/review`, data),
 };
 
-// ─── Payments ───────────────────────────────────────────────
+// ─── Payments ─────────────────────────────────────────────
 export const paymentAPI = {
   getConfig: () => api.get('/payments/config'),
   createIntent: (data) => api.post('/payments/create-intent', data),
@@ -68,7 +74,7 @@ export const paymentAPI = {
   refund: (data) => api.post('/payments/refund', data),
 };
 
-// ─── Addresses ──────────────────────────────────────────────
+// ─── Addresses ────────────────────────────────────────────
 export const addressAPI = {
   getAll: () => api.get('/addresses'),
   add: (data) => api.post('/addresses', data),
@@ -76,7 +82,7 @@ export const addressAPI = {
   delete: (id) => api.delete(`/addresses/${id}`),
 };
 
-// ─── Admin ──────────────────────────────────────────────────
+// ─── Admin ────────────────────────────────────────────────
 export const adminAPI = {
   getStats: () => api.get('/admin/stats'),
   getUsers: (params) => api.get('/admin/users', { params }),
