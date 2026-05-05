@@ -1,7 +1,7 @@
 {
   "name": "crave-backend",
   "version": "1.0.0",
-  "description": "Crave Food Delivery Backend API - MongoDB",
+  "description": "Crave Food Delivery Backend API - MongoDB + Vercel Serverless",
   "main": "src/server.js",
   "engines": {
     "node": ">=18.0.0",
@@ -10,7 +10,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "seed": "node src/config/seed.js"
+    "seed": "node src/config/seed.js",
+    "vercel-build": "echo 'Backend build complete'"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
