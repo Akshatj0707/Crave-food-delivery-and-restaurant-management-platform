@@ -12,11 +12,11 @@ const app = express();
 
 // ─── Connect MongoDB ───────────────────────────────────────
 connectDB().catch(err => {
-  console.error('❌ Failed to connect to MongoDB:', err.message);
+  console.error('❌ Failed to connect MongoDB:', err.message);
   process.exit(1);
 });
 
-// ─── Stripe Webhook (raw body before json parser) ─────────
+// ─── Stripe Webhook (raw body) ────────────────────────────
 app.post('/api/payments/webhook',
   express.raw({ type: 'application/json' }),
   paymentController.handleWebhook
@@ -39,6 +39,7 @@ app.use(cors({
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
     if (
+      origin.endsWith('.koyeb.app') ||
       origin.endsWith('.railway.app') ||
       origin.endsWith('.netlify.app') ||
       origin.endsWith('.vercel.app')
@@ -58,7 +59,7 @@ app.use('/api', rateLimit({
   legacyHeaders: false,
 }));
 
-// ─── API Routes ───────────────────────────────────────────
+// ─── Routes ───────────────────────────────────────────────
 app.use('/api', routes);
 
 // ─── Health Check ─────────────────────────────────────────
@@ -77,7 +78,7 @@ app.get('/health', async (req, res) => {
 
 app.get('/', (req, res) => {
   res.json({
-    message: '🍽️ Crave API is running on Railway!',
+    message: '🍽️ Crave API is running on Koyeb!',
     version: '1.0.0',
     health: '/health',
     api: '/api',
@@ -96,7 +97,8 @@ app.use((err, req, res, next) => {
 });
 
 // ─── Start Server ─────────────────────────────────────────
-const PORT = process.env.PORT || 5000;
+// Koyeb uses port 8000 by default
+const PORT = process.env.PORT || 8000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Crave API running on port ${PORT}`);
   console.log(`   Env: ${process.env.NODE_ENV || 'development'}`);

@@ -1,7 +1,7 @@
 {
   "name": "crave-backend",
   "version": "1.0.0",
-  "description": "Crave Food Delivery Backend API - MongoDB + Netlify Functions",
+  "description": "Crave Food Delivery Backend API - MongoDB + Koyeb",
   "main": "src/server.js",
   "engines": {
     "node": ">=18.0.0",
@@ -10,8 +10,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "seed": "node src/config/seed.js",
-    "netlify-dev": "netlify dev"
+    "seed": "node src/config/seed.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
