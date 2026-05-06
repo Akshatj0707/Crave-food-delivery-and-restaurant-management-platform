@@ -28,12 +28,29 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.options('*', cors());
 
-// ─── Health (no DB needed) ────────────────────────────────
-app.get('/health', async (req, res) => {
+// ─── Mount routes FIRST before DB ────────────────────────
+app.use('/api', routes);
+
+// ─── Root ─────────────────────────────────────────────────
+app.get('/', (req, res) => {
   const mongoose = require('mongoose');
   const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
   res.json({
-    status: 'ok',
+    message: '🍽️ Crave API is running on Render!',
+    version: '1.0.0',
+    dbStatus: states[mongoose.connection.readyState],
+    mongoUri: process.env.MONGODB_URI ? 'SET ✅' : 'NOT SET ❌',
+    health: '/health',
+    restaurants: '/api/restaurants',
+  });
+});
+
+// ─── Health Check ─────────────────────────────────────────
+app.get('/health', (req, res) => {
+  const mongoose = require('mongoose');
+  const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+  res.json({
+    status: mongoose.connection.readyState === 1 ? 'ok' : 'error',
     service: 'Crave API',
     dbStatus: states[mongoose.connection.readyState],
     mongoUri: process.env.MONGODB_URI ? 'SET ✅' : 'NOT SET ❌',
@@ -42,29 +59,9 @@ app.get('/health', async (req, res) => {
   });
 });
 
-app.get('/', (req, res) => {
-  res.json({
-    message: '🍽️ Crave API is running!',
-    health: '/health',
-    restaurants: '/api/restaurants',
-  });
-});
-
-// ─── Connect DB then mount routes ─────────────────────────
-connectDB()
-  .then(() => {
-    app.use('/api', routes);
-    console.log('✅ Routes mounted');
-  })
-  .catch(err => {
-    console.error('❌ DB connection failed:', err.message);
-    // Still mount routes so health check works
-    app.use('/api', routes);
-  });
-
-// ─── Fallback API error ───────────────────────────────────
-app.use('/api', (req, res) => {
-  res.status(404).json({ success: false, message: 'Route not found' });
+// ─── 404 ─────────────────────────────────────────────────
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: `Route not found: ${req.method} ${req.path}` });
 });
 
 // ─── Error Handler ────────────────────────────────────────
@@ -73,12 +70,17 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, message: err.message || 'Internal server error' });
 });
 
-// ─── Start ────────────────────────────────────────────────
+// ─── Start server ─────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Crave API running on port ${PORT}`);
   console.log(`   MONGODB_URI: ${process.env.MONGODB_URI ? 'SET ✅' : 'NOT SET ❌'}`);
   console.log(`   NODE_ENV: ${process.env.NODE_ENV}`);
 });
+
+// ─── Connect DB after server starts ───────────────────────
+connectDB()
+  .then(() => console.log('✅ Database ready'))
+  .catch(err => console.error('❌ DB Error:', err.message));
 
 module.exports = app;

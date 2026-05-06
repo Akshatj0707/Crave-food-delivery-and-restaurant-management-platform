@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticate, authorize } = require('../middleware/auth');
+const dbCheck = require('../middleware/dbCheck');
 
 const authController = require('../controllers/authController');
 const restaurantController = require('../controllers/restaurantController');
@@ -8,6 +9,9 @@ const orderController = require('../controllers/orderController');
 const paymentController = require('../controllers/paymentController');
 const adminController = require('../controllers/adminController');
 const addressController = require('../controllers/addressController');
+
+// Apply DB check to ALL routes
+router.use(dbCheck);
 
 // ─── Auth ──────────────────────────────────────────────────
 router.post('/auth/signup', authController.signup);
