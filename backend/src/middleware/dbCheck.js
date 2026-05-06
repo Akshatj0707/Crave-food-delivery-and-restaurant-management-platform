@@ -1,15 +1,16 @@
 const mongoose = require('mongoose');
 
-// Middleware to check DB connection before any API route
 const dbCheck = (req, res, next) => {
-  if (mongoose.connection.readyState !== 1) {
-    return res.status(503).json({
-      success: false,
-      message: 'Database connecting... please retry in a few seconds',
-      dbStatus: mongoose.connection.readyState,
-    });
-  }
-  next();
+  const state = mongoose.connection.readyState;
+  // 1 = connected, 2 = connecting — allow both
+  if (state === 1 || state === 2) return next();
+  
+  return res.status(503).json({
+    success: false,
+    message: 'Database not connected. Check MONGODB_URI on Render.',
+    dbState: state,
+    hint: 'Go to Render → Environment → verify MONGODB_URI is correct'
+  });
 };
 
 module.exports = dbCheck;

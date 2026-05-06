@@ -1,37 +1,36 @@
 const mongoose = require('mongoose');
 
-let cachedConn = null;
-
 const connectDB = async () => {
-  if (cachedConn && mongoose.connection.readyState === 1) {
-    return cachedConn;
-  }
-
-  if (!process.env.MONGODB_URI) {
-    throw new Error('MONGODB_URI environment variable is not set');
-  }
-
-  // Decode URI in case % encoding causes issues
   const uri = process.env.MONGODB_URI;
+  
+  if (!uri) {
+    throw new Error('MONGODB_URI is not set');
+  }
+
+  console.log('🔄 Connecting to MongoDB...');
+  console.log('   Host:', uri.split('@')[1]?.split('/')[0] || 'unknown');
+
+  mongoose.set('strictQuery', false);
 
   try {
-    mongoose.set('strictQuery', false);
-    const conn = await mongoose.connect(uri, {
+    await mongoose.connect(uri, {
       serverSelectionTimeoutMS: 30000,
+      connectTimeoutMS: 30000,
       socketTimeoutMS: 75000,
-      maxPoolSize: 10,
-      minPoolSize: 1,
+      maxPoolSize: 5,
       retryWrites: true,
-      w: 'majority',
     });
-    cachedConn = conn;
-    console.log(`✅ MongoDB connected: ${conn.connection.host}`);
-    return conn;
+    console.log('✅ MongoDB connected:', mongoose.connection.host);
   } catch (err) {
-    cachedConn = null;
-    console.error('❌ MongoDB connection failed:', err.message);
+    console.error('❌ MongoDB failed:', err.message);
     throw err;
   }
+
+  mongoose.connection.on('error', err => console.error('MongoDB error:', err.message));
+  mongoose.connection.on('disconnected', () => {
+    console.warn('MongoDB disconnected — reconnecting...');
+    setTimeout(connectDB, 5000);
+  });
 };
 
 module.exports = connectDB;
