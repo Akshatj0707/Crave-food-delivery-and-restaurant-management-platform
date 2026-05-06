@@ -1,10 +1,8 @@
 const mongoose = require('mongoose');
 
-// Cache connection across warm invocations in serverless
 let cachedConn = null;
 
 const connectDB = async () => {
-  // Return cached connection if still alive
   if (cachedConn && mongoose.connection.readyState === 1) {
     return cachedConn;
   }
@@ -13,15 +11,19 @@ const connectDB = async () => {
     throw new Error('MONGODB_URI environment variable is not set');
   }
 
-  try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 10000,
-      socketTimeoutMS: 45000,
-      maxPoolSize: 10,
-      // Important for serverless — don't buffer commands
-      bufferCommands: false,
-    });
+  // Decode URI in case % encoding causes issues
+  const uri = process.env.MONGODB_URI;
 
+  try {
+    mongoose.set('strictQuery', false);
+    const conn = await mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 75000,
+      maxPoolSize: 10,
+      minPoolSize: 1,
+      retryWrites: true,
+      w: 'majority',
+    });
     cachedConn = conn;
     console.log(`✅ MongoDB connected: ${conn.connection.host}`);
     return conn;
