@@ -1,0 +1,13 @@
+[
+  {
+    "label": "Home",
+    "addressLine1": "101 Palm Street, Bandra West",
+    "addressLine2": "",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400050",
+    "isDefault": true,
+    "createdAt": { "$date": "2024-01-01T00:00:00Z" },
+    "updatedAt": { "$date": "2024-01-01T00:00:00Z" }
+  }
+]

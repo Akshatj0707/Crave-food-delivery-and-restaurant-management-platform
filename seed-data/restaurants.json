@@ -1,0 +1,527 @@
+[
+  {
+    "name": "Spice Garden",
+    "description": "Authentic North Indian cuisine with aromatic spices and rich gravies",
+    "cuisineTypes": ["North Indian", "Mughlai", "Biryani"],
+    "logoUrl": "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=200&h=200&fit=crop",
+    "coverImageUrl": "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=800&h=400&fit=crop",
+    "addressLine1": "Shop 12, MG Road",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400001",
+    "phone": "022-12345678",
+    "avgRating": 4.5,
+    "totalRatings": 1250,
+    "avgDeliveryTime": 35,
+    "deliveryFee": 40,
+    "minOrderAmount": 200,
+    "supportsDelivery": true,
+    "supportsTakeaway": true,
+    "supportsDineIn": true,
+    "totalTables": 12,
+    "isOpen": true,
+    "isVerified": true,
+    "isFeatured": true,
+    "tables": [
+      { "tableNumber": "T1", "capacity": 2, "isAvailable": true },
+      { "tableNumber": "T2", "capacity": 2, "isAvailable": true },
+      { "tableNumber": "T3", "capacity": 4, "isAvailable": true },
+      { "tableNumber": "T4", "capacity": 4, "isAvailable": true },
+      { "tableNumber": "T5", "capacity": 6, "isAvailable": true },
+      { "tableNumber": "T6", "capacity": 6, "isAvailable": true }
+    ],
+    "businessHours": [
+      { "dayOfWeek": 0, "openTime": "10:00", "closeTime": "23:00", "isClosed": false },
+      { "dayOfWeek": 1, "openTime": "10:00", "closeTime": "23:00", "isClosed": true },
+      { "dayOfWeek": 2, "openTime": "10:00", "closeTime": "23:00", "isClosed": false },
+      { "dayOfWeek": 3, "openTime": "10:00", "closeTime": "23:00", "isClosed": false },
+      { "dayOfWeek": 4, "openTime": "10:00", "closeTime": "23:00", "isClosed": false },
+      { "dayOfWeek": 5, "openTime": "10:00", "closeTime": "23:00", "isClosed": false },
+      { "dayOfWeek": 6, "openTime": "10:00", "closeTime": "23:00", "isClosed": false }
+    ],
+    "menu": [
+      {
+        "name": "Starters",
+        "sortOrder": 0,
+        "isActive": true,
+        "items": [
+          {
+            "name": "Paneer Tikka",
+            "description": "Cottage cheese marinated in spices, grilled in tandoor",
+            "price": 280,
+            "isVeg": true,
+            "isFeatured": true,
+            "spiceLevel": 2,
+            "isAvailable": true,
+            "preparationTime": 20,
+            "tags": ["popular", "bestseller"],
+            "imageUrl": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400&h=300&fit=crop"
+          },
+          {
+            "name": "Veg Seekh Kebab",
+            "description": "Mixed vegetable kebabs on skewers",
+            "price": 220,
+            "isVeg": true,
+            "isFeatured": false,
+            "spiceLevel": 1,
+            "isAvailable": true,
+            "preparationTime": 15,
+            "tags": [],
+            "imageUrl": "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=400&h=300&fit=crop"
+          },
+          {
+            "name": "Chicken Tikka",
+            "description": "Boneless chicken marinated in yogurt and spices",
+            "price": 320,
+            "isVeg": false,
+            "isFeatured": true,
+            "spiceLevel": 2,
+            "isAvailable": true,
+            "preparationTime": 20,
+            "tags": ["popular"],
+            "imageUrl": "https://images.unsplash.com/photo-1610057099431-d73a1c9d2f2f?w=400&h=300&fit=crop"
+          }
+        ]
+      },
+      {
+        "name": "Main Course",
+        "sortOrder": 1,
+        "isActive": true,
+        "items": [
+          {
+            "name": "Butter Chicken",
+            "description": "Tender chicken in rich tomato-butter gravy",
+            "price": 380,
+            "isVeg": false,
+            "isFeatured": true,
+            "spiceLevel": 1,
+            "isAvailable": true,
+            "preparationTime": 25,
+            "tags": ["bestseller"],
+            "imageUrl": "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&h=300&fit=crop"
+          },
+          {
+            "name": "Dal Makhani",
+            "description": "Black lentils slow-cooked with butter and cream",
+            "price": 280,
+            "isVeg": true,
+            "isFeatured": false,
+            "spiceLevel": 0,
+            "isAvailable": true,
+            "preparationTime": 20,
+            "tags": [],
+            "imageUrl": "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&h=300&fit=crop"
+          },
+          {
+            "name": "Palak Paneer",
+            "description": "Cottage cheese in smooth spinach gravy",
+            "price": 300,
+            "isVeg": true,
+            "isFeatured": false,
+            "spiceLevel": 1,
+            "isAvailable": true,
+            "preparationTime": 20,
+            "tags": [],
+            "imageUrl": "https://images.unsplash.com/photo-1645177628172-a94c1f96e6db?w=400&h=300&fit=crop"
+          },
+          {
+            "name": "Chicken Korma",
+            "description": "Chicken cooked in rich creamy cashew sauce",
+            "price": 400,
+            "isVeg": false,
+            "isFeatured": false,
+            "spiceLevel": 1,
+            "isAvailable": true,
+            "preparationTime": 25,
+            "tags": [],
+            "imageUrl": "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&h=300&fit=crop"
+          }
+        ]
+      },
+      {
+        "name": "Biryani",
+        "sortOrder": 2,
+        "isActive": true,
+        "items": [
+          {
+            "name": "Veg Dum Biryani",
+            "description": "Aromatic basmati rice with vegetables",
+            "price": 320,
+            "isVeg": true,
+            "isFeatured": true,
+            "spiceLevel": 2,
+            "isAvailable": true,
+            "preparationTime": 30,
+            "tags": ["popular"],
+            "imageUrl": "https://images.unsplash.com/photo-1563379091339-03246963d96c?w=400&h=300&fit=crop"
+          },
+          {
+            "name": "Chicken Dum Biryani",
+            "description": "Slow-cooked chicken with fragrant basmati rice",
+            "price": 420,
+            "isVeg": false,
+            "isFeatured": true,
+            "spiceLevel": 2,
+            "isAvailable": true,
+            "preparationTime": 35,
+            "tags": ["bestseller", "popular"],
+            "imageUrl": "https://images.unsplash.com/photo-1631515243349-e0cb75fb8d3a?w=400&h=300&fit=crop"
+          }
+        ]
+      },
+      {
+        "name": "Breads",
+        "sortOrder": 3,
+        "isActive": true,
+        "items": [
+          {
+            "name": "Butter Naan",
+            "description": "Soft leavened bread baked in tandoor with butter",
+            "price": 50,
+            "isVeg": true,
+            "isFeatured": false,
+            "spiceLevel": 0,
+            "isAvailable": true,
+            "preparationTime": 10,
+            "tags": [],
+            "imageUrl": "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&h=300&fit=crop"
+          },
+          {
+            "name": "Garlic Naan",
+            "description": "Naan topped with garlic and herbs",
+            "price": 60,
+            "isVeg": true,
+            "isFeatured": false,
+            "spiceLevel": 0,
+            "isAvailable": true,
+            "preparationTime": 10,
+            "tags": [],
+            "imageUrl": "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&h=300&fit=crop"
+          },
+          {
+            "name": "Paratha",
+            "description": "Whole wheat layered flatbread",
+            "price": 40,
+            "isVeg": true,
+            "isFeatured": false,
+            "spiceLevel": 0,
+            "isAvailable": true,
+            "preparationTime": 10,
+            "tags": [],
+            "imageUrl": "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&h=300&fit=crop"
+          }
+        ]
+      }
+    ],
+    "createdAt": { "$date": "2024-01-01T00:00:00Z" },
+    "updatedAt": { "$date": "2024-01-01T00:00:00Z" }
+  },
+  {
+    "name": "Pizza Paradise",
+    "description": "Wood-fired pizzas and authentic Italian classics",
+    "cuisineTypes": ["Italian", "Pizza", "Pasta"],
+    "logoUrl": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=200&h=200&fit=crop",
+    "coverImageUrl": "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&h=400&fit=crop",
+    "addressLine1": "45 Linking Road",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400050",
+    "phone": "022-87654321",
+    "avgRating": 4.3,
+    "totalRatings": 890,
+    "avgDeliveryTime": 25,
+    "deliveryFee": 30,
+    "minOrderAmount": 150,
+    "supportsDelivery": true,
+    "supportsTakeaway": true,
+    "supportsDineIn": true,
+    "totalTables": 8,
+    "isOpen": true,
+    "isVerified": true,
+    "isFeatured": true,
+    "tables": [
+      { "tableNumber": "T1", "capacity": 2, "isAvailable": true },
+      { "tableNumber": "T2", "capacity": 2, "isAvailable": true },
+      { "tableNumber": "T3", "capacity": 4, "isAvailable": true },
+      { "tableNumber": "T4", "capacity": 4, "isAvailable": true }
+    ],
+    "businessHours": [
+      { "dayOfWeek": 0, "openTime": "11:00", "closeTime": "23:00", "isClosed": false },
+      { "dayOfWeek": 1, "openTime": "11:00", "closeTime": "23:00", "isClosed": true },
+      { "dayOfWeek": 2, "openTime": "11:00", "closeTime": "23:00", "isClosed": false },
+      { "dayOfWeek": 3, "openTime": "11:00", "closeTime": "23:00", "isClosed": false },
+      { "dayOfWeek": 4, "openTime": "11:00", "closeTime": "23:00", "isClosed": false },
+      { "dayOfWeek": 5, "openTime": "11:00", "closeTime": "23:30", "isClosed": false },
+      { "dayOfWeek": 6, "openTime": "11:00", "closeTime": "23:30", "isClosed": false }
+    ],
+    "menu": [
+      {
+        "name": "Pizzas",
+        "sortOrder": 0,
+        "isActive": true,
+        "items": [
+          {
+            "name": "Margherita",
+            "description": "Classic tomato, fresh mozzarella, basil",
+            "price": 350,
+            "isVeg": true,
+            "isFeatured": true,
+            "spiceLevel": 0,
+            "isAvailable": true,
+            "preparationTime": 20,
+            "tags": ["bestseller"],
+            "imageUrl": "https://images.unsplash.com/photo-1604382355076-af4b0eb60143?w=400&h=300&fit=crop"
+          },
+          {
+            "name": "Pepperoni",
+            "description": "Loaded with premium pepperoni and mozzarella",
+            "price": 450,
+            "isVeg": false,
+            "isFeatured": true,
+            "spiceLevel": 1,
+            "isAvailable": true,
+            "preparationTime": 20,
+            "tags": ["popular", "bestseller"],
+            "imageUrl": "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=400&h=300&fit=crop"
+          },
+          {
+            "name": "Farmhouse",
+            "description": "Capsicum, onion, mushroom, corn",
+            "price": 400,
+            "isVeg": true,
+            "isFeatured": false,
+            "spiceLevel": 0,
+            "isAvailable": true,
+            "preparationTime": 20,
+            "tags": [],
+            "imageUrl": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop"
+          },
+          {
+            "name": "BBQ Chicken",
+            "description": "Grilled chicken, BBQ sauce, red onion",
+            "price": 480,
+            "isVeg": false,
+            "isFeatured": false,
+            "spiceLevel": 1,
+            "isAvailable": true,
+            "preparationTime": 25,
+            "tags": [],
+            "imageUrl": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop"
+          }
+        ]
+      },
+      {
+        "name": "Pasta",
+        "sortOrder": 1,
+        "isActive": true,
+        "items": [
+          {
+            "name": "Pasta Arrabbiata",
+            "description": "Penne in spicy tomato sauce",
+            "price": 280,
+            "isVeg": true,
+            "isFeatured": false,
+            "spiceLevel": 2,
+            "isAvailable": true,
+            "preparationTime": 15,
+            "tags": [],
+            "imageUrl": "https://images.unsplash.com/photo-1608219992759-8d74ed8d76eb?w=400&h=300&fit=crop"
+          },
+          {
+            "name": "Pasta Alfredo",
+            "description": "Fettuccine in creamy white sauce",
+            "price": 300,
+            "isVeg": true,
+            "isFeatured": true,
+            "spiceLevel": 0,
+            "isAvailable": true,
+            "preparationTime": 15,
+            "tags": ["popular"],
+            "imageUrl": "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=300&fit=crop"
+          }
+        ]
+      },
+      {
+        "name": "Sides",
+        "sortOrder": 2,
+        "isActive": true,
+        "items": [
+          {
+            "name": "Garlic Bread",
+            "description": "Toasted bread with garlic butter",
+            "price": 120,
+            "isVeg": true,
+            "isFeatured": false,
+            "spiceLevel": 0,
+            "isAvailable": true,
+            "preparationTime": 10,
+            "tags": [],
+            "imageUrl": "https://images.unsplash.com/photo-1573140247632-f8fd74997d5c?w=400&h=300&fit=crop"
+          },
+          {
+            "name": "Caesar Salad",
+            "description": "Crisp romaine, croutons, parmesan",
+            "price": 200,
+            "isVeg": true,
+            "isFeatured": false,
+            "spiceLevel": 0,
+            "isAvailable": true,
+            "preparationTime": 10,
+            "tags": [],
+            "imageUrl": "https://images.unsplash.com/photo-1550304943-4f24f54ddde9?w=400&h=300&fit=crop"
+          }
+        ]
+      }
+    ],
+    "createdAt": { "$date": "2024-01-01T00:00:00Z" },
+    "updatedAt": { "$date": "2024-01-01T00:00:00Z" }
+  },
+  {
+    "name": "Burger Barn",
+    "description": "Gourmet burgers stacked high with premium ingredients",
+    "cuisineTypes": ["American", "Burgers", "Fast Food"],
+    "logoUrl": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&h=200&fit=crop",
+    "coverImageUrl": "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=800&h=400&fit=crop",
+    "addressLine1": "22 Hill Road",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400050",
+    "phone": "022-11223344",
+    "avgRating": 4.1,
+    "totalRatings": 560,
+    "avgDeliveryTime": 20,
+    "deliveryFee": 25,
+    "minOrderAmount": 100,
+    "supportsDelivery": true,
+    "supportsTakeaway": true,
+    "supportsDineIn": false,
+    "totalTables": 0,
+    "isOpen": true,
+    "isVerified": true,
+    "isFeatured": false,
+    "tables": [],
+    "businessHours": [
+      { "dayOfWeek": 0, "openTime": "10:00", "closeTime": "23:00", "isClosed": false },
+      { "dayOfWeek": 1, "openTime": "10:00", "closeTime": "23:00", "isClosed": false },
+      { "dayOfWeek": 2, "openTime": "10:00", "closeTime": "23:00", "isClosed": false },
+      { "dayOfWeek": 3, "openTime": "10:00", "closeTime": "23:00", "isClosed": false },
+      { "dayOfWeek": 4, "openTime": "10:00", "closeTime": "23:00", "isClosed": false },
+      { "dayOfWeek": 5, "openTime": "10:00", "closeTime": "23:30", "isClosed": false },
+      { "dayOfWeek": 6, "openTime": "10:00", "closeTime": "23:30", "isClosed": false }
+    ],
+    "menu": [
+      {
+        "name": "Burgers",
+        "sortOrder": 0,
+        "isActive": true,
+        "items": [
+          {
+            "name": "Classic Cheeseburger",
+            "description": "Beef patty, cheddar, lettuce, tomato",
+            "price": 280,
+            "isVeg": false,
+            "isFeatured": true,
+            "spiceLevel": 1,
+            "isAvailable": true,
+            "preparationTime": 15,
+            "tags": ["bestseller"],
+            "imageUrl": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop"
+          },
+          {
+            "name": "Crispy Veg Burger",
+            "description": "Crispy veggie patty with jalapeños",
+            "price": 220,
+            "isVeg": true,
+            "isFeatured": true,
+            "spiceLevel": 1,
+            "isAvailable": true,
+            "preparationTime": 15,
+            "tags": ["popular"],
+            "imageUrl": "https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?w=400&h=300&fit=crop"
+          },
+          {
+            "name": "Double Stack Burger",
+            "description": "Double beef patty, bacon, special sauce",
+            "price": 380,
+            "isVeg": false,
+            "isFeatured": false,
+            "spiceLevel": 1,
+            "isAvailable": true,
+            "preparationTime": 20,
+            "tags": [],
+            "imageUrl": "https://images.unsplash.com/photo-1553979459-d2229ba7433a?w=400&h=300&fit=crop"
+          },
+          {
+            "name": "Chicken Burger",
+            "description": "Crispy fried chicken with coleslaw",
+            "price": 260,
+            "isVeg": false,
+            "isFeatured": false,
+            "spiceLevel": 1,
+            "isAvailable": true,
+            "preparationTime": 15,
+            "tags": [],
+            "imageUrl": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop"
+          }
+        ]
+      },
+      {
+        "name": "Sides & Drinks",
+        "sortOrder": 1,
+        "isActive": true,
+        "items": [
+          {
+            "name": "French Fries",
+            "description": "Crispy golden fries with seasoning",
+            "price": 120,
+            "isVeg": true,
+            "isFeatured": false,
+            "spiceLevel": 0,
+            "isAvailable": true,
+            "preparationTime": 10,
+            "tags": [],
+            "imageUrl": "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&h=300&fit=crop"
+          },
+          {
+            "name": "Onion Rings",
+            "description": "Golden crispy onion rings",
+            "price": 140,
+            "isVeg": true,
+            "isFeatured": false,
+            "spiceLevel": 0,
+            "isAvailable": true,
+            "preparationTime": 10,
+            "tags": [],
+            "imageUrl": "https://images.unsplash.com/photo-1639024471283-03518883512d?w=400&h=300&fit=crop"
+          },
+          {
+            "name": "Milkshake",
+            "description": "Thick creamy vanilla, chocolate or strawberry",
+            "price": 160,
+            "isVeg": true,
+            "isFeatured": false,
+            "spiceLevel": 0,
+            "isAvailable": true,
+            "preparationTime": 5,
+            "tags": [],
+            "imageUrl": "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&h=300&fit=crop"
+          },
+          {
+            "name": "Loaded Fries",
+            "description": "Fries topped with cheese, jalapenos and sauces",
+            "price": 180,
+            "isVeg": true,
+            "isFeatured": false,
+            "spiceLevel": 2,
+            "isAvailable": true,
+            "preparationTime": 12,
+            "tags": [],
+            "imageUrl": "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&h=300&fit=crop"
+          }
+        ]
+      }
+    ],
+    "createdAt": { "$date": "2024-01-01T00:00:00Z" },
+    "updatedAt": { "$date": "2024-01-01T00:00:00Z" }
+  }
+]

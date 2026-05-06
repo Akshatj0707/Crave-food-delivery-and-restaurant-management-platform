@@ -1,0 +1,62 @@
+[
+  {
+    "email": "superadmin@crave.com",
+    "passwordHash": "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK8i",
+    "role": "super_admin",
+    "firstName": "Super",
+    "lastName": "Admin",
+    "phone": "9999999999",
+    "isVerified": true,
+    "isActive": true,
+    "createdAt": { "$date": "2024-01-01T00:00:00Z" },
+    "updatedAt": { "$date": "2024-01-01T00:00:00Z" }
+  },
+  {
+    "email": "admin@crave.com",
+    "passwordHash": "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK8i",
+    "role": "admin",
+    "firstName": "Crave",
+    "lastName": "Admin",
+    "phone": "9888888888",
+    "isVerified": true,
+    "isActive": true,
+    "createdAt": { "$date": "2024-01-01T00:00:00Z" },
+    "updatedAt": { "$date": "2024-01-01T00:00:00Z" }
+  },
+  {
+    "email": "partner1@crave.com",
+    "passwordHash": "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK8i",
+    "role": "partner",
+    "firstName": "Raj",
+    "lastName": "Sharma",
+    "phone": "9777777771",
+    "isVerified": true,
+    "isActive": true,
+    "createdAt": { "$date": "2024-01-01T00:00:00Z" },
+    "updatedAt": { "$date": "2024-01-01T00:00:00Z" }
+  },
+  {
+    "email": "partner2@crave.com",
+    "passwordHash": "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK8i",
+    "role": "partner",
+    "firstName": "Priya",
+    "lastName": "Patel",
+    "phone": "9777777772",
+    "isVerified": true,
+    "isActive": true,
+    "createdAt": { "$date": "2024-01-01T00:00:00Z" },
+    "updatedAt": { "$date": "2024-01-01T00:00:00Z" }
+  },
+  {
+    "email": "customer@crave.com",
+    "passwordHash": "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK8i",
+    "role": "customer",
+    "firstName": "Arjun",
+    "lastName": "Verma",
+    "phone": "9666666661",
+    "isVerified": true,
+    "isActive": true,
+    "createdAt": { "$date": "2024-01-01T00:00:00Z" },
+    "updatedAt": { "$date": "2024-01-01T00:00:00Z" }
+  }
+]
