@@ -4,7 +4,9 @@ const Restaurant = require('../models/Restaurant');
 const getRestaurants = async (req, res) => {
   try {
     const { cuisine, mode, search, city, page = 1, limit = 12 } = req.query;
-    const query = { isVerified: true };
+
+    // Don't filter by isVerified so all restaurants show
+    const query = {};
 
     if (search) query.$text = { $search: search };
     if (cuisine) query.cuisineTypes = { $in: [new RegExp(cuisine, 'i')] };
@@ -20,12 +22,17 @@ const getRestaurants = async (req, res) => {
       .sort({ isFeatured: -1, avgRating: -1 })
       .skip(skip)
       .limit(parseInt(limit))
-      .populate('ownerId', 'firstName lastName');
+      .lean();
 
     res.json({
       success: true,
       data: restaurants,
-      pagination: { page: parseInt(page), limit: parseInt(limit), total, totalPages: Math.ceil(total / limit) }
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
     });
   } catch (err) {
     console.error('Get restaurants error:', err);
@@ -36,8 +43,7 @@ const getRestaurants = async (req, res) => {
 // GET /api/restaurants/:id
 const getRestaurant = async (req, res) => {
   try {
-    const restaurant = await Restaurant.findById(req.params.id)
-      .populate('ownerId', 'firstName lastName email');
+    const restaurant = await Restaurant.findById(req.params.id).lean();
     if (!restaurant)
       return res.status(404).json({ success: false, message: 'Restaurant not found' });
     res.json({ success: true, data: restaurant });
@@ -49,7 +55,7 @@ const getRestaurant = async (req, res) => {
 // GET /api/restaurants/partner/mine
 const getMyRestaurant = async (req, res) => {
   try {
-    const restaurant = await Restaurant.findOne({ ownerId: req.user._id });
+    const restaurant = await Restaurant.findOne({ ownerId: req.user._id }).lean();
     res.json({ success: true, data: restaurant || null });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });
@@ -63,23 +69,28 @@ const createRestaurant = async (req, res) => {
     if (existing)
       return res.status(400).json({ success: false, message: 'You already have a restaurant' });
 
-    const { name, description, cuisineTypes, addressLine1, city, state, pincode,
+    const {
+      name, description, cuisineTypes, addressLine1, city, state, pincode,
       phone, email, deliveryFee, minOrderAmount, supportsDelivery,
-      supportsTakeaway, supportsDineIn, totalTables } = req.body;
+      supportsTakeaway, supportsDineIn, totalTables
+    } = req.body;
 
-    // Default business hours Mon-Sun 10am-11pm
     const businessHours = Array.from({ length: 7 }, (_, i) => ({
       dayOfWeek: i, openTime: '10:00', closeTime: '23:00', isClosed: i === 1
     }));
 
     const restaurant = await Restaurant.create({
       ownerId: req.user._id, name, description,
-      cuisineTypes: cuisineTypes || [], addressLine1, city, state, pincode,
-      phone, email, deliveryFee: deliveryFee || 0, minOrderAmount: minOrderAmount || 0,
+      cuisineTypes: cuisineTypes || [],
+      addressLine1, city, state, pincode,
+      phone, email,
+      deliveryFee: deliveryFee || 0,
+      minOrderAmount: minOrderAmount || 0,
       supportsDelivery: supportsDelivery !== false,
       supportsTakeaway: supportsTakeaway !== false,
       supportsDineIn: supportsDineIn || false,
       totalTables: totalTables || 0,
+      isVerified: true,
       businessHours,
     });
 
@@ -96,13 +107,14 @@ const updateRestaurant = async (req, res) => {
     const restaurant = await Restaurant.findById(req.params.id);
     if (!restaurant)
       return res.status(404).json({ success: false, message: 'Restaurant not found' });
+
     if (restaurant.ownerId.toString() !== req.user._id.toString() &&
-        !['admin', 'super_admin'].includes(req.user.role))
+      !['admin', 'super_admin'].includes(req.user.role))
       return res.status(403).json({ success: false, message: 'Not authorized' });
 
-    const allowed = ['name','description','cuisineTypes','addressLine1','city','state',
-      'pincode','phone','email','deliveryFee','minOrderAmount','supportsDelivery',
-      'supportsTakeaway','supportsDineIn','totalTables','isOpen'];
+    const allowed = ['name', 'description', 'cuisineTypes', 'addressLine1', 'city',
+      'state', 'pincode', 'phone', 'email', 'deliveryFee', 'minOrderAmount',
+      'supportsDelivery', 'supportsTakeaway', 'supportsDineIn', 'totalTables', 'isOpen'];
     allowed.forEach(k => { if (req.body[k] !== undefined) restaurant[k] = req.body[k]; });
 
     await restaurant.save();
@@ -115,7 +127,7 @@ const updateRestaurant = async (req, res) => {
 // GET /api/restaurants/:id/menu
 const getMenu = async (req, res) => {
   try {
-    const restaurant = await Restaurant.findById(req.params.id, { menu: 1, name: 1 });
+    const restaurant = await Restaurant.findById(req.params.id, { menu: 1, name: 1 }).lean();
     if (!restaurant)
       return res.status(404).json({ success: false, message: 'Restaurant not found' });
     res.json({ success: true, data: restaurant.menu });
@@ -158,9 +170,14 @@ const addMenuItem = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Category not found' });
 
     category.items.push({
-      name, description, price: parseFloat(price), originalPrice,
-      imageUrl, isVeg: isVeg !== false, spiceLevel: parseInt(spiceLevel) || 0,
-      tags: tags || [], sortOrder: category.items.length,
+      name, description,
+      price: parseFloat(price),
+      originalPrice,
+      imageUrl,
+      isVeg: isVeg !== false,
+      spiceLevel: parseInt(spiceLevel) || 0,
+      tags: tags || [],
+      sortOrder: category.items.length,
     });
     await restaurant.save();
     res.status(201).json({ success: true, data: category });
@@ -200,7 +217,7 @@ const updateMenuItem = async (req, res) => {
 // GET /api/restaurants/:id/tables
 const getTables = async (req, res) => {
   try {
-    const restaurant = await Restaurant.findById(req.params.id, { tables: 1 });
+    const restaurant = await Restaurant.findById(req.params.id, { tables: 1 }).lean();
     if (!restaurant)
       return res.status(404).json({ success: false, message: 'Restaurant not found' });
     res.json({ success: true, data: restaurant.tables });
