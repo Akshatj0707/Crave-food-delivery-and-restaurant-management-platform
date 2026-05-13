@@ -22,8 +22,7 @@ const StatusBadge = ({ status }) => {
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
       padding: '4px 10px', borderRadius: 'var(--radius-full)',
-      fontSize: 12, fontWeight: 700,
-      color: cfg.color, background: cfg.bg
+      fontSize: 12, fontWeight: 700, color: cfg.color, background: cfg.bg
     }}>
       <Icon size={12} />{cfg.label}
     </span>
@@ -37,10 +36,11 @@ export default function OrdersPage() {
 
   useEffect(() => {
     const fetch = async () => {
+      setLoading(true);
       try {
         const params = activeTab !== 'all' ? { status: activeTab } : {};
         const res = await orderAPI.getMyOrders(params);
-        setOrders(res.data.data);
+        setOrders(res.data.data || []);
       } catch (err) {
         console.error(err);
       } finally {
@@ -89,39 +89,48 @@ export default function OrdersPage() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {orders.map(order => (
-              <Link key={order.id} to={`/orders/${order.id}`} style={{ textDecoration: 'none' }}>
-                <div className="card" style={{ padding: 20, cursor: 'pointer' }}
-                  onMouseEnter={e => e.currentTarget.style.boxShadow = 'var(--shadow-md)'}
-                  onMouseLeave={e => e.currentTarget.style.boxShadow = 'var(--shadow-sm)'}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-                    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                      {order.restaurant_logo && (
-                        <img src={order.restaurant_logo} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover', border: '1px solid var(--gray-200)' }} />
-                      )}
-                      <div>
-                        <h3 style={{ fontSize: 16, fontWeight: 800, marginBottom: 3 }}>{order.restaurant_name}</h3>
-                        <p style={{ fontSize: 12, color: 'var(--gray-500)' }}>
-                          #{order.order_number} · {new Date(order.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                        </p>
+            {orders.map(order => {
+              const orderId = order._id || order.id;
+              const restName = order.restaurantId?.name || order.restaurant_name || 'Restaurant';
+              const restLogo = order.restaurantId?.logoUrl || order.restaurant_logo;
+              const orderItems = order.items || [];
+              return (
+                <Link key={orderId} to={`/orders/${orderId}`} style={{ textDecoration: 'none' }}>
+                  <div className="card" style={{ padding: 20, cursor: 'pointer' }}
+                    onMouseEnter={e => e.currentTarget.style.boxShadow = 'var(--shadow-md)'}
+                    onMouseLeave={e => e.currentTarget.style.boxShadow = 'var(--shadow-sm)'}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+                      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                        {restLogo && (
+                          <img src={restLogo} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover', border: '1px solid var(--gray-200)' }}
+                            onError={e => { e.target.style.display = 'none'; }} />
+                        )}
+                        <div>
+                          <h3 style={{ fontSize: 16, fontWeight: 800, marginBottom: 3 }}>{restName}</h3>
+                          <p style={{ fontSize: 12, color: 'var(--gray-500)' }}>
+                            #{order.orderNumber || order.order_number} · {new Date(order.createdAt || order.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </p>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <StatusBadge status={order.status} />
+                        <ChevronRight size={16} color="var(--gray-400)" />
                       </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <StatusBadge status={order.status} />
-                      <ChevronRight size={16} color="var(--gray-400)" />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 14, borderTop: '1px solid var(--gray-100)' }}>
+                      <p style={{ fontSize: 13, color: 'var(--gray-500)' }}>
+                        {orderItems.slice(0, 2).map(i => i.name || i.item_name).join(', ')}
+                        {orderItems.length > 2 && ` +${orderItems.length - 2} more`}
+                      </p>
+                      <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--gray-900)' }}>
+                        ₹{parseFloat(order.totalAmount || order.total_amount || 0).toFixed(2)}
+                      </span>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 14, borderTop: '1px solid var(--gray-100)' }}>
-                    <p style={{ fontSize: 13, color: 'var(--gray-500)' }}>
-                      {order.items?.slice(0, 2).map(i => i.name).join(', ')}
-                      {order.items?.length > 2 && ` +${order.items.length - 2} more`}
-                    </p>
-                    <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--gray-900)' }}>₹{parseFloat(order.total_amount).toFixed(2)}</span>
-                  </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>

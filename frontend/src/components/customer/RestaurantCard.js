@@ -21,19 +21,42 @@ const ServiceBadge = ({ mode }) => {
 };
 
 export default function RestaurantCard({ restaurant }) {
+  // Fix: use _id or id, never undefined
+  const restId = restaurant._id || restaurant.id;
+
   const {
-    id, name, description, cuisine_types, logo_url, cover_image_url,
-    avg_rating, total_ratings, avg_delivery_time, delivery_fee,
-    supports_delivery, supports_takeaway, supports_dine_in,
-    is_open, is_featured, min_order_amount
+    name, description, cuisine_types, cuisineTypes, logo_url, logoUrl,
+    cover_image_url, coverImageUrl, avg_rating, avgRating, total_ratings,
+    totalRatings, avg_delivery_time, avgDeliveryTime, delivery_fee, deliveryFee,
+    supports_delivery, supportsDelivery, supports_takeaway, supportsTakeaway,
+    supports_dine_in, supportsDineIn, is_featured, isFeatured, min_order_amount,
+    minOrderAmount,
   } = restaurant;
 
+  // Handle both snake_case (old) and camelCase (MongoDB)
+  const cuisines = cuisine_types || cuisineTypes || [];
+  const logo = logo_url || logoUrl;
+  const cover = cover_image_url || coverImageUrl;
+  const rating = avg_rating || avgRating || 0;
+  const ratings = total_ratings || totalRatings || 0;
+  const deliveryTime = avg_delivery_time || avgDeliveryTime || 30;
+  const fee = delivery_fee || deliveryFee || 0;
+  const featured = is_featured || isFeatured || false;
+  const minOrder = min_order_amount || minOrderAmount || 0;
+  const hasDelivery = supports_delivery || supportsDelivery || false;
+  const hasTakeaway = supports_takeaway || supportsTakeaway || false;
+  const hasDineIn = supports_dine_in || supportsDineIn || false;
+
+  // Force all restaurants as open
+  const isOpen = true;
+
+  if (!restId) return null; // Don't render if no ID
+
   return (
-    <Link to={`/restaurant/${id}`} style={{ textDecoration: 'none', display: 'block' }}>
+    <Link to={`/restaurant/${restId}`} style={{ textDecoration: 'none', display: 'block' }}>
       <div className="card" style={{
         cursor: 'pointer', transition: 'var(--transition-slow)',
-        opacity: is_open ? 1 : 0.7,
-        border: is_featured ? '2px solid var(--crave-orange-light)' : '1px solid var(--gray-200)'
+        border: featured ? '2px solid var(--crave-orange-light)' : '1px solid var(--gray-200)'
       }}
         onMouseEnter={e => {
           e.currentTarget.style.transform = 'translateY(-4px)';
@@ -45,52 +68,48 @@ export default function RestaurantCard({ restaurant }) {
         }}
       >
         {/* Cover Image */}
-        <div style={{ position: 'relative', height: 180, overflow: 'hidden', background: 'var(--gray-100)' }}>
-          {cover_image_url ? (
+        <div style={{ position: 'relative', height: 180, overflow: 'hidden', background: 'linear-gradient(135deg, var(--crave-orange-pale), var(--crave-orange-mid))' }}>
+          {cover ? (
             <img
-              src={cover_image_url}
+              src={cover}
               alt={name}
               style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s ease' }}
               onMouseEnter={e => e.target.style.transform = 'scale(1.05)'}
               onMouseLeave={e => e.target.style.transform = 'scale(1)'}
+              onError={e => { e.target.style.display = 'none'; }}
             />
           ) : (
-            <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, var(--crave-orange-pale), var(--crave-orange-mid))' }} />
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 48 }}>🍽️</div>
           )}
 
-          {/* Badges */}
-          <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 6 }}>
-            {is_featured && (
+          {featured && (
+            <div style={{ position: 'absolute', top: 12, left: 12 }}>
               <span style={{
                 background: 'var(--crave-orange)', color: 'white',
                 padding: '3px 8px', borderRadius: 'var(--radius-full)',
                 fontSize: 10, fontWeight: 800, letterSpacing: '0.05em'
               }}>★ FEATURED</span>
-            )}
-          </div>
-          {!is_open && (
-            <div style={{
-              position: 'absolute', inset: 0,
-              background: 'rgba(0,0,0,0.5)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center'
-            }}>
-              <span style={{
-                color: 'white', fontWeight: 800, fontSize: 16,
-                background: 'rgba(0,0,0,0.6)', padding: '8px 20px',
-                borderRadius: 'var(--radius-full)'
-              }}>Currently Closed</span>
             </div>
           )}
 
-          {/* Logo */}
-          {logo_url && (
+          {/* Open badge */}
+          <div style={{ position: 'absolute', top: 12, right: 12 }}>
+            <span style={{
+              background: 'var(--success)', color: 'white',
+              padding: '3px 10px', borderRadius: 'var(--radius-full)',
+              fontSize: 10, fontWeight: 800
+            }}>● Open</span>
+          </div>
+
+          {logo && (
             <div style={{
               position: 'absolute', bottom: -20, left: 16,
               width: 52, height: 52, borderRadius: 12,
               overflow: 'hidden', border: '2px solid white',
               boxShadow: 'var(--shadow-md)', background: 'white'
             }}>
-              <img src={logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={logo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={e => { e.target.style.display = 'none'; }} />
             </div>
           )}
         </div>
@@ -101,34 +120,32 @@ export default function RestaurantCard({ restaurant }) {
             <h3 style={{ fontSize: 17, fontWeight: 800, color: 'var(--gray-900)', fontFamily: 'var(--font-display)' }}>{name}</h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, marginLeft: 8 }}>
               <Star size={14} fill="var(--warning)" color="var(--warning)" />
-              <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--gray-800)' }}>{parseFloat(avg_rating || 0).toFixed(1)}</span>
-              <span style={{ fontSize: 12, color: 'var(--gray-400)' }}>({total_ratings || 0})</span>
+              <span style={{ fontSize: 14, fontWeight: 700 }}>{parseFloat(rating).toFixed(1)}</span>
+              <span style={{ fontSize: 12, color: 'var(--gray-400)' }}>({ratings})</span>
             </div>
           </div>
 
           <p style={{ fontSize: 13, color: 'var(--gray-500)', marginBottom: 10, lineHeight: 1.4 }}>
-            {cuisine_types?.join(' · ')}
+            {cuisines.join(' · ')}
           </p>
 
-          {/* Service modes */}
           <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
-            {supports_delivery && <ServiceBadge mode="delivery" />}
-            {supports_takeaway && <ServiceBadge mode="takeaway" />}
-            {supports_dine_in && <ServiceBadge mode="dine_in" />}
+            {hasDelivery && <ServiceBadge mode="delivery" />}
+            {hasTakeaway && <ServiceBadge mode="takeaway" />}
+            {hasDineIn && <ServiceBadge mode="dine_in" />}
           </div>
 
-          {/* Stats row */}
           <div style={{ display: 'flex', gap: 16, paddingTop: 12, borderTop: '1px solid var(--gray-100)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--gray-500)', fontSize: 13 }}>
               <Clock size={13} />
-              <span>{avg_delivery_time} min</span>
+              <span>{deliveryTime} min</span>
             </div>
             <div style={{ fontSize: 13, color: 'var(--gray-500)' }}>
-              {delivery_fee > 0 ? `₹${delivery_fee} delivery` : '🎉 Free delivery'}
+              {fee > 0 ? `₹${fee} delivery` : '🎉 Free delivery'}
             </div>
-            {min_order_amount > 0 && (
+            {minOrder > 0 && (
               <div style={{ fontSize: 13, color: 'var(--gray-500)', marginLeft: 'auto' }}>
-                Min ₹{min_order_amount}
+                Min ₹{minOrder}
               </div>
             )}
           </div>

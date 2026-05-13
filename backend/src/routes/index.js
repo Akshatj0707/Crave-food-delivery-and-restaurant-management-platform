@@ -549,3 +549,43 @@ router.get('/add-veg-dishes', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+
+// ─── Fix all restaurants - mark open + fix ratings ────────
+router.get('/fix-restaurants', async (req, res) => {
+  try {
+    const Restaurant = require('../models/Restaurant');
+    const result = await Restaurant.updateMany({}, {
+      $set: {
+        isOpen: true,
+        isVerified: true,
+      }
+    });
+
+    // Fix restaurants with 0 ratings - restore seeded values
+    await Restaurant.updateOne({ name: 'Spice Garden' }, {
+      $set: { avgRating: 4.5, totalRatings: 1250, avgDeliveryTime: 35, deliveryFee: 40 }
+    });
+    await Restaurant.updateOne({ name: 'Pizza Paradise' }, {
+      $set: { avgRating: 4.3, totalRatings: 890, avgDeliveryTime: 25, deliveryFee: 30 }
+    });
+    await Restaurant.updateOne({ name: 'Burger Barn' }, {
+      $set: { avgRating: 4.1, totalRatings: 560, avgDeliveryTime: 20, deliveryFee: 25 }
+    });
+
+    const restaurants = await Restaurant.find({}, { name: 1, isOpen: 1, avgRating: 1, isVerified: 1 });
+    res.json({
+      success: true,
+      message: '✅ All restaurants fixed!',
+      updated: result.modifiedCount,
+      restaurants: restaurants.map(r => ({
+        name: r.name,
+        isOpen: r.isOpen,
+        avgRating: r.avgRating,
+        isVerified: r.isVerified,
+      }))
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});

@@ -1,25 +1,18 @@
 import axios from 'axios';
 
-// When frontend and backend are on same domain (Cyclic),
-// use relative URL. Otherwise use env variable.
-const API_URL = process.env.REACT_APP_API_URL ||
-  (window.location.hostname === 'localhost'
-    ? 'http://localhost:5000/api'
-    : '/api');
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' }
 });
 
-// Attach token to every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('crave_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// Handle 401 globally
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -32,7 +25,6 @@ api.interceptors.response.use(
   }
 );
 
-// ─── Auth ──────────────────────────────────────────────────
 export const authAPI = {
   signup: (data) => api.post('/auth/signup', data),
   login: (data) => api.post('/auth/login', data),
@@ -41,21 +33,38 @@ export const authAPI = {
   changePassword: (data) => api.put('/auth/change-password', data),
 };
 
-// ─── Restaurants ───────────────────────────────────────────
 export const restaurantAPI = {
   getAll: (params) => api.get('/restaurants', { params }),
-  getById: (id) => api.get(`/restaurants/${id}`),
+  // Fix: use _id if id is undefined
+  getById: (id) => {
+    const safeId = id?._id || id;
+    return api.get(`/restaurants/${safeId}`);
+  },
   getMine: () => api.get('/restaurants/partner/mine'),
   create: (data) => api.post('/restaurants', data),
-  update: (id, data) => api.put(`/restaurants/${id}`, data),
-  getMenu: (id) => api.get(`/restaurants/${id}/menu`),
-  addMenuCategory: (id, data) => api.post(`/restaurants/${id}/menu/categories`, data),
-  addMenuItem: (id, data) => api.post(`/restaurants/${id}/menu/items`, data),
+  update: (id, data) => {
+    const safeId = id?._id || id;
+    return api.put(`/restaurants/${safeId}`, data);
+  },
+  getMenu: (id) => {
+    const safeId = id?._id || id;
+    return api.get(`/restaurants/${safeId}/menu`);
+  },
+  addMenuCategory: (id, data) => {
+    const safeId = id?._id || id;
+    return api.post(`/restaurants/${safeId}/menu/categories`, data);
+  },
+  addMenuItem: (id, data) => {
+    const safeId = id?._id || id;
+    return api.post(`/restaurants/${safeId}/menu/items`, data);
+  },
   updateMenuItem: (itemId, data) => api.put(`/restaurants/menu/items/${itemId}`, data),
-  getTables: (id) => api.get(`/restaurants/${id}/tables`),
+  getTables: (id) => {
+    const safeId = id?._id || id;
+    return api.get(`/restaurants/${safeId}/tables`);
+  },
 };
 
-// ─── Orders ───────────────────────────────────────────────
 export const orderAPI = {
   create: (data) => api.post('/orders', data),
   getMyOrders: (params) => api.get('/orders', { params }),
@@ -66,7 +75,6 @@ export const orderAPI = {
   addReview: (id, data) => api.post(`/orders/${id}/review`, data),
 };
 
-// ─── Payments ─────────────────────────────────────────────
 export const paymentAPI = {
   getConfig: () => api.get('/payments/config'),
   createIntent: (data) => api.post('/payments/create-intent', data),
@@ -74,7 +82,6 @@ export const paymentAPI = {
   refund: (data) => api.post('/payments/refund', data),
 };
 
-// ─── Addresses ────────────────────────────────────────────
 export const addressAPI = {
   getAll: () => api.get('/addresses'),
   add: (data) => api.post('/addresses', data),
@@ -82,7 +89,6 @@ export const addressAPI = {
   delete: (id) => api.delete(`/addresses/${id}`),
 };
 
-// ─── Admin ────────────────────────────────────────────────
 export const adminAPI = {
   getStats: () => api.get('/admin/stats'),
   getUsers: (params) => api.get('/admin/users', { params }),
